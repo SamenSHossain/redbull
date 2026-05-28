@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+.DS_Store
+.ipynb_checkpoints/
+*.ipynb
+R/
+outputs/
+verify.py
+smoke_test.py
+.vercel/
+.idea/
+.vscode/
