@@ -12,6 +12,26 @@ python -m venv .venv
 
 ## Deploy
 
-This Space is built from the bundled `Dockerfile`. The PyMC posterior under
-`cache/pymc_idata.nc` and the EconML pickles under `cache/*.pkl` are shipped
-with the image — they take ~17 s per fit so we precompute via `precompute.py`.
+Deployed on [Vercel](https://vercel.com) — connect this repo, deploy on push
+to `main`.
+
+> **Heads-up:** the Shiny runtime relies on persistent websockets and the
+> ~25 MB PyMC posterior in `cache/pymc_idata.nc`, neither of which fits the
+> default Vercel serverless model. The Vercel deploy is a Next.js shell
+> backed by Python serverless functions over pre-computed artifacts (no live
+> Shiny process). The unmodified Shiny app remains the best way to run
+> everything end-to-end locally via the **Local run** instructions above,
+> and as a Docker container (see `Dockerfile`).
+
+### Pre-computed artifacts
+
+- `cache/pymc_idata.nc` — ArviZ NetCDF posterior (~25 MB). MCMC fit takes
+  ~17 s, so we precompute via `precompute.py`.
+- `cache/econml_linear.pkl`, `cache/econml_forest.pkl` — fitted EconML
+  `LinearDML` + `CausalForestDML` estimators.
+
+Regenerate with:
+
+```bash
+.venv/bin/python precompute.py
+```
