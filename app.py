@@ -93,6 +93,13 @@ if (CACHE / "pymc_idata.nc").exists():
 if PYMC_IDATA is None and (CACHE / "pymc_idata.pkl").exists():
     PYMC_IDATA, PYMC_XCOLS = _load_pickle(CACHE / "pymc_idata.pkl")
 
+_ARCH_PATH = APP_DIR / "ARCHITECTURE.md"
+ARCHITECTURE_MD = (
+    _ARCH_PATH.read_text(encoding="utf-8")
+    if _ARCH_PATH.exists()
+    else "# About\n\n_ARCHITECTURE.md not found — see the repo for the full architecture doc._"
+)
+
 
 # ---------------------------------------------------------------------------
 # Theme helpers
@@ -118,6 +125,21 @@ def rb_pill(label: str, value: str):
         f"{label} ",
         ui.tags.strong(value),
         class_="rb-pill",
+    )
+
+
+def tab_intro(eyebrow: str, method: str, body_html: str):
+    """Per-tab preamble: small uppercase eyebrow on the left, monospace
+    ``method · X`` pill on the right, body paragraph below. Mirrors the
+    section-intro pattern in ARCHITECTURE.md."""
+    return ui.tags.div(
+        ui.tags.div(
+            ui.tags.span(eyebrow, class_="rb-tab-intro-eyebrow"),
+            ui.tags.span(f"method · {method}", class_="rb-method-pill"),
+            class_="rb-tab-intro-head",
+        ),
+        ui.tags.div(ui.HTML(body_html), class_="rb-tab-intro-body"),
+        class_="rb-tab-intro",
     )
 
 
@@ -173,6 +195,14 @@ app_ui = ui.TagList(
     ui.navset_underline(
     ui.nav_panel(
         "Overview",
+        tab_intro(
+            "Sample summary",
+            "filter · respondent-level",
+            "Three sidebar filters can be intersected. The <strong>DoWhy</strong> "
+            "and <strong>EconML</strong> tabs re-estimate live on whichever "
+            "subgroup you pick — value boxes and histograms below show the "
+            "shape of that subgroup.",
+        ),
         ui.layout_sidebar(
             ui.sidebar(
                 ui.h5("Respondent filter"),
@@ -210,16 +240,34 @@ app_ui = ui.TagList(
     ),
 
     ui.nav_panel(
+        "About",
+        tab_intro(
+            "Architecture reference",
+            "ARCHITECTURE.md",
+            "What the app is, how the pieces fit, and the format of the data, "
+            "layout, visuals, and persistence. Rendered from "
+            "<code>ARCHITECTURE.md</code> at the repo root.",
+        ),
+        ui.tags.div(
+            ui.markdown(ARCHITECTURE_MD),
+            class_="rb-about",
+        ),
+    ),
+
+    ui.nav_panel(
         "DoWhy",
+        tab_intro(
+            "Classical identification",
+            "dowhy",
+            "Assumes a DAG (rating ← engagement_high, sm_engagement, price, brand, "
+            "rb_brand_image, price_importance), runs <code>CausalModel.identify_effect</code> "
+            "+ linear-regression backdoor estimator, then three refutation tests: "
+            "<strong>random common cause</strong> (~unchanged), <strong>placebo</strong> "
+            "(~0), <strong>80% bootstrap subset</strong> (stable). The point of this "
+            "tab is <em>robustness</em>, not magnitude.",
+        ),
         ui.card(
             ui.card_header("Causal effect of High engagement on favorability"),
-            ui.tags.p(
-                "DoWhy identifies the effect under the assumed DAG and re-estimates "
-                "it on whichever subgroup of respondents you select in the sidebar. "
-                "Refutation tests confirm the estimate is stable: random common cause ≈ original, "
-                "placebo ≈ 0, 80% subset bootstrap ≈ original.",
-                style="font-size:14px;color:var(--rb-fg-muted);line-height:1.55;",
-            ),
             ui.output_ui("dowhy_hero"),
         ),
         ui.layout_column_wrap(
@@ -233,6 +281,15 @@ app_ui = ui.TagList(
 
     ui.nav_panel(
         "EconML",
+        tab_intro(
+            "Heterogeneity",
+            "econml",
+            "<code>LinearDML</code> for ATE inference, <code>CausalForestDML</code> "
+            "for CATE. The sidebar sliders describe a hypothetical respondent and the "
+            "page predicts the CATE for <em>that</em> profile with a 90% CI. The CATE "
+            "curve below traces the effect against any single modifier — useful for "
+            "spotting saturation or floors.",
+        ),
         ui.layout_sidebar(
             ui.sidebar(
                 ui.h5("Hypothetical respondent"),
@@ -266,11 +323,14 @@ app_ui = ui.TagList(
 
     ui.nav_panel(
         "PyMC",
-        ui.tags.p(
-            "Hierarchical Bayesian conjoint. The posterior is cached "
-            "(precomputed via ", ui.tags.code("precompute.py"),
-            ") because each MCMC fit takes ~17 seconds.",
-            style="font-size:14px;color:var(--rb-fg-muted);margin:6px 0 12px;",
+        tab_intro(
+            "Hierarchical Bayesian conjoint",
+            "pymc",
+            "Each respondent gets their own part-worth vector <code>beta_i</code> "
+            "drawn from a population <code>mu_beta</code> with a diagonal "
+            "<code>sigma_beta</code>. The posterior is cached "
+            "(<code>precompute.py</code> writes <code>cache/pymc_idata.nc</code>) "
+            "because each MCMC fit takes ~17 seconds.",
         ),
         ui.layout_column_wrap(
             ui.card(ui.card_header("Population part-worths (95% HDI)"),
@@ -287,6 +347,16 @@ app_ui = ui.TagList(
 
     ui.nav_panel(
         "CausalNex",
+        tab_intro(
+            "Structure learning",
+            "causalnex · NOTEARS",
+            "Instead of assuming a DAG, learn one from the data. NOTEARS returns a "
+            "weighted dependency network; the sidebar slider prunes edges by "
+            "<code>|weight|</code>. Key finding: after conditioning on actual "
+            "consumption, there's no direct edge "
+            "<code>sm_engagement → purchase_intent_rb</code> — social engagement "
+            "is a downstream correlate, not a direct cause of purchase.",
+        ),
         ui.layout_sidebar(
             ui.sidebar(
                 ui.h5("NOTEARS structure learning"),
@@ -311,6 +381,15 @@ app_ui = ui.TagList(
 
     ui.nav_panel(
         "Synthesis",
+        tab_intro(
+            "Recommendation deltas",
+            "summary",
+            "Four-row comparison of the marketing-team headline claim vs. what "
+            "the causal analysis actually shows, plus the ordered list of the "
+            "strongest causal levers. The four methods agree on direction but "
+            "disagree on <em>who</em> the effect works for — that's what the "
+            "deltas below capture.",
+        ),
         ui.card(
             ui.card_header("How the recommendations change after causal analysis"),
             ui.output_ui("synth_grid"),
