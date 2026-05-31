@@ -84,14 +84,25 @@ ECONML_FOREST_CACHED = _load_pickle(CACHE / "econml_forest.pkl")
 
 PYMC_IDATA = None
 PYMC_XCOLS = ["redbull", "monster", "price_350", "price_450", "eng_medium", "eng_high"]
-if (CACHE / "pymc_idata.nc").exists():
+PYMC_LOAD_NOTE = ""  # surfaced in the UI so we can debug failures without log access
+
+_nc_path = CACHE / "pymc_idata.nc"
+PYMC_LOAD_NOTE = (
+    f"exists={_nc_path.exists()} "
+    f"size={_nc_path.stat().st_size if _nc_path.exists() else 'N/A'} "
+    f"path={_nc_path}"
+)
+if _nc_path.exists():
     try:
         import arviz as az
-        PYMC_IDATA = az.from_netcdf(CACHE / "pymc_idata.nc")
+        PYMC_IDATA = az.from_netcdf(_nc_path)
+        PYMC_LOAD_NOTE += " | loaded OK"
     except Exception as e:
-        print(f"failed loading pymc_idata.nc: {e}")
+        PYMC_LOAD_NOTE += f" | load FAILED: {type(e).__name__}: {e}"
 if PYMC_IDATA is None and (CACHE / "pymc_idata.pkl").exists():
     PYMC_IDATA, PYMC_XCOLS = _load_pickle(CACHE / "pymc_idata.pkl")
+    PYMC_LOAD_NOTE += " | fell back to pkl"
+print(f"PYMC cache: {PYMC_LOAD_NOTE}", flush=True)
 
 _ARCH_PATH = APP_DIR / "ARCHITECTURE.md"
 ARCHITECTURE_MD = (
@@ -679,8 +690,9 @@ def server(input, output, session):
     def pymc_forest():
         if PYMC_IDATA is None:
             fig, ax = plt.subplots(figsize=(8, 4))
-            ax.text(0.5, 0.5, "Run precompute.py first to cache PyMC posterior.",
-                    ha="center", va="center", color=RB_MUTED, fontsize=11)
+            ax.text(0.5, 0.5,
+                    "PyMC posterior not loaded.\n\n" + PYMC_LOAD_NOTE,
+                    ha="center", va="center", color=RB_MUTED, fontsize=9, wrap=True)
             ax.set_axis_off(); ax.grid(False)
             return fig
         import arviz as az
