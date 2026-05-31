@@ -26,5 +26,10 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 
 COPY --chown=user . .
 
+# Regenerate cache under the deployed numpy/pickle ABI. The committed
+# cache/*.pkl files were created under numpy 1.26 locally and crash on
+# load with numpy 1.23 (numpy's __randomstate_ctor signature changed).
+RUN python precompute.py
+
 EXPOSE 7860
 CMD ["python", "-m", "shiny", "run", "app.py", "--host", "0.0.0.0", "--port", "7860"]
