@@ -43,6 +43,10 @@ RB_MUTED  = "#3A6286"   # dark-blue-1
 RB_BORDER = "#d1e1f6"
 
 plt.rcParams.update({
+    # Disable matplotlib's $...$ math parsing globally so labels like
+    # "Price $3.50 (vs $2.50)" and "mu_beta[eng_medium]" render literally
+    # instead of being mangled into italic mathtext.
+    "text.parse_math":    False,
     "figure.facecolor":   "white",
     "axes.facecolor":     "white",
     "axes.edgecolor":     RB_BORDER,
@@ -730,16 +734,16 @@ def server(input, output, session):
             ax.set_axis_off(); ax.grid(False)
             return fig
         beta_i = PYMC_IDATA.posterior["beta_i"].mean(("chain", "draw")).values
-        fig, axes = plt.subplots(2, 3, figsize=(13, 6), sharey=True)
+        fig, axes = plt.subplots(2, 3, figsize=(13, 7.5), sharey=True,
+                                 constrained_layout=True)
         titles = ["Red Bull (vs Celsius)", "Monster (vs Celsius)",
                   "Price $3.50 (vs $2.50)",  "Price $4.50 (vs $2.50)",
                   "Medium engagement (vs Light)", "High engagement (vs Light)"]
         for j, (ax, title) in enumerate(zip(axes.flat, titles)):
             ax.hist(beta_i[:, j], bins=18, alpha=0.9, edgecolor="white", color=RB_RED)
             ax.axvline(0, color=RB_NAVY, linestyle="--", linewidth=0.9, alpha=0.6)
-            ax.set_title(title, fontsize=10)
+            ax.set_title(title, fontsize=10, pad=8)
             ax.set_xlabel("posterior-mean part-worth")
-        fig.tight_layout()
         return fig
 
     # ----- CausalNex ---------------------------------------------------------
