@@ -138,7 +138,7 @@ def build_long_conjoint(raw: pd.DataFrame) -> pd.DataFrame:
     return long
 
 
-def build_dataset():
+def _build_from_xlsx():
     raw = load_raw()
     resp = build_respondent_table(raw)
     long = build_long_conjoint(raw)
@@ -149,8 +149,20 @@ def build_dataset():
     return resp, long, merged
 
 
+def build_dataset():
+    out_dir = Path(__file__).parent
+    csv_resp   = out_dir / "respondents.csv"
+    csv_long   = out_dir / "conjoint_long.csv"
+    csv_merged = out_dir / "conjoint_merged.csv"
+    if csv_resp.exists() and csv_long.exists() and csv_merged.exists():
+        return pd.read_csv(csv_resp), pd.read_csv(csv_long), pd.read_csv(csv_merged)
+    return _build_from_xlsx()
+
+
 if __name__ == "__main__":
-    resp, long, merged = build_dataset()
+    # Regenerate from the source XLSX. Delete the existing CSVs first if you
+    # want this to take effect — build_dataset() prefers the cached CSVs.
+    resp, long, merged = _build_from_xlsx()
     print(f"Respondents kept: {len(resp)}")
     print(f"Long-format rows: {len(long)} ({len(long) // 12} x 12)")
     print("\nRespondent covariate summary:")
