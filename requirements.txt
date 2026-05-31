@@ -14,3 +14,4 @@ pytensor==2.26.4
 arviz==0.21.0
 xarray==2024.3.0
 causalnex==0.12.1
+h5py==3.11.0
