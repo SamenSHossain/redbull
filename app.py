@@ -690,9 +690,8 @@ def server(input, output, session):
     def pymc_forest():
         if PYMC_IDATA is None:
             fig, ax = plt.subplots(figsize=(8, 4))
-            ax.text(0.5, 0.5,
-                    "PyMC posterior not loaded.\n\n" + PYMC_LOAD_NOTE,
-                    ha="center", va="center", color=RB_MUTED, fontsize=9, wrap=True)
+            ax.text(0.5, 0.5, "PyMC posterior not loaded — see startup log.",
+                    ha="center", va="center", color=RB_MUTED, fontsize=11)
             ax.set_axis_off(); ax.grid(False)
             return fig
         import arviz as az
