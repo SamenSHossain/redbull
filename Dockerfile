@@ -26,6 +26,10 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 
 COPY --chown=user . .
 
+# Diagnostic: confirm the LFS-tracked cache artifacts arrived as real
+# binaries (not text pointer files) inside the build context.
+RUN ls -lh cache/ && head -c 16 cache/pymc_idata.nc | od -An -c | head -1
+
 # Regenerate the EconML pickles under the deployed numpy. They were
 # created under numpy 1.26 locally and crash on load under numpy 1.23
 # (numpy's __randomstate_ctor signature changed between those versions).
