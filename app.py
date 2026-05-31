@@ -711,7 +711,7 @@ def server(input, output, session):
         ax.scatter(means, y_pos, color=RB_RED, s=70, zorder=3, edgecolor="white", linewidth=1)
         ax.axvline(0, color=RB_NAVY, linestyle="--", linewidth=0.9, alpha=0.5)
         ax.set_yticks(y_pos)
-        ax.set_yticklabels([f"mu_beta[{c}]" for c in PYMC_XCOLS])
+        ax.set_yticklabels(PYMC_XCOLS)
         ax.set_xlabel("part-worth utility (95% credible interval)")
         ax.grid(axis="y", visible=False)
         fig.tight_layout()
