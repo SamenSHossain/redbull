@@ -705,7 +705,7 @@ def server(input, output, session):
         lo = np.quantile(post, 0.025, axis=0)
         hi = np.quantile(post, 0.975, axis=0)
 
-        fig, ax = plt.subplots(figsize=(8, 4.5))
+        fig, ax = plt.subplots(figsize=(8, 4.5), constrained_layout=True)
         y_pos = np.arange(len(PYMC_XCOLS))[::-1]
         ax.hlines(y_pos, lo, hi, color=RB_NAVY, linewidth=2.2)
         ax.scatter(means, y_pos, color=RB_RED, s=70, zorder=3, edgecolor="white", linewidth=1)
@@ -714,7 +714,6 @@ def server(input, output, session):
         ax.set_yticklabels(PYMC_XCOLS)
         ax.set_xlabel("part-worth utility (95% credible interval)")
         ax.grid(axis="y", visible=False)
-        fig.tight_layout()
         return fig
 
     @render.data_frame
